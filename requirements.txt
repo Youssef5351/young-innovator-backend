@@ -1,13 +1,5 @@
-# flask 
-# flask-mysqldb 
-# flask-jwt-extended 
-# Pyrebase4
-# flask_cors
-# langchain
-# openai
-# nltk
-# tflearn
-# tensorflow
-# numpy
-# pickle
-# json
+Flask==3.0.0
+flask-cors==4.0.0
+firebase-admin==6.3.0
+python-dotenv==1.0.0
+gunicorn==21.2.0
