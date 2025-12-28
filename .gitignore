@@ -1,0 +1,20 @@
+# Open .gitignore and make sure it has:
+echo ".env" >> .gitignore
+echo "serviceAccountKey.json" >> .gitignore
+echo "serviceAccountKey.json.json" >> .gitignore
+echo "__pycache__/" >> .gitignore
+echo "*.pyc" >> .gitignore
+echo ".venv/" >> .gitignore
+echo "venv/" >> .gitignore
+```
+
+Or manually edit `.gitignore`:
+```
+.env
+serviceAccountKey.json
+serviceAccountKey.json.json
+__pycache__/
+*.pyc
+.venv/
+venv/
+nltk_data/
