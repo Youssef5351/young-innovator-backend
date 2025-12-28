@@ -42,7 +42,6 @@ def register():
     except Exception as e:
         return jsonify({"message": "Invalid token", "error": str(e)}), 401
 
-    # Prepare user data
     user_payload = {
         "userId": uid,
         "fullName": fullName,
@@ -51,36 +50,38 @@ def register():
         "gender": gender
     }
 
-    # Save to main users table
-    db.child("users").child(uid).set(user_payload)
+    try:
+        # CORRECT ADMIN SDK SYNTAX:
+        # db is admin_db.reference()
+        db.child("users").child(uid).set(user_payload)
 
-    # Save to specific role tables
-    if userType == "Doctor":
-        db.child("doctors").child(uid).set({**user_payload, "patient_list": []})
-    elif userType == "Relative":
-        db.child("relatives").child(uid).set({**user_payload, "relative_list": []})
-    elif userType == "Elderly":
-        db.child("elderlies").child(uid).set({**user_payload, "doctor_list": [], "relative_list": []})
+        if userType == "Doctor":
+            db.child("doctors").child(uid).set({**user_payload, "patient_list": []})
+        elif userType == "Relative":
+            db.child("relatives").child(uid).set({**user_payload, "relative_list": []})
+        elif userType == "Elderly":
+            db.child("elderlies").child(uid).set({**user_payload, "doctor_list": [], "relative_list": []})
 
-    # Fetch the final data back as a dictionary
-    userDetails = db.child("users").child(uid).get().val()
+        # Fetching back: .get() returns the data directly in Admin SDK
+        userDetails = db.child("users").child(uid).get()
 
-    # Create custom token if needed, or just use the ID token
-    custom_token = auth.create_custom_token(uid).decode("utf-8")
+        custom_token = auth.create_custom_token(uid).decode("utf-8")
 
-    response = make_response(jsonify({
-        "message": "Registration successful!",
-        "userDetails": userDetails,
-        "jwtToken": custom_token
-    }), 200)
+        response = make_response(jsonify({
+            "message": "Registration successful!",
+            "userDetails": userDetails,
+            "jwtToken": custom_token
+        }), 200)
 
-    response.set_cookie("jwtToken", custom_token, httponly=True, samesite="Strict")
-    return response
+        response.set_cookie("jwtToken", custom_token, httponly=True, samesite="Strict")
+        return response
+    except Exception as e:
+        print(f"Database Error: {e}")
+        return jsonify({"message": "Database write failed", "error": str(e)}), 500
 
 @app.route("/auth/login", methods=["POST"])
 def login():
     id_token = request.json.get("idToken")
-
     if not id_token:
         return jsonify({"message": "ID token is required"}), 400
 
@@ -88,11 +89,12 @@ def login():
         decoded = auth.verify_id_token(id_token)
         uid = decoded["uid"]
         
-        # .val() is crucial here to get the dict
-        userDetails = db.child("users").child(uid).get().val()
+        # CORRECT ADMIN SDK SYNTAX:
+        # .get() in admin_db returns the dictionary directly (no .val() needed)
+        userDetails = db.child("users").child(uid).get()
         
         if not userDetails:
-            return jsonify({"message": "User record not found in database"}), 404
+            return jsonify({"message": "User record not found"}), 404
 
         response = make_response(jsonify({
             "message": "Login successful!",
@@ -104,5 +106,5 @@ def login():
         return response
 
     except Exception as e:
-        print(f"Login Error: {e}") # This will show in your server logs
+        print(f"Login Error: {e}")
         return jsonify({"message": "Login failed", "error": str(e)}), 401
