@@ -9,5 +9,5 @@ firebase_config = {
     "messagingSenderId": "975832441358",
     "appId": "1:975832441358:web:6c1f9766fe44deec93d25f",
     # This must point to the Service Account JSON for project: test-7d81f
-    "serviceAccount": "serviceAccountKey.json.json" 
+    "serviceAccount": "serviceAccountKey.json" 
 }
