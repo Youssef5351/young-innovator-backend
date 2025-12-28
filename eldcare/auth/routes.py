@@ -82,29 +82,46 @@ def register():
 @app.route("/auth/login", methods=["POST"])
 def login():
     id_token = request.json.get("idToken")
+    
     if not id_token:
         return jsonify({"message": "ID token is required"}), 400
-
+    
     try:
+        # Verify this is working
+        print("Attempting to verify token...")
         decoded = auth.verify_id_token(id_token)
         uid = decoded["uid"]
+        print(f"✓ Token verified for user: {uid}")
         
-        # CORRECT ADMIN SDK SYNTAX:
-        # .get() in admin_db returns the dictionary directly (no .val() needed)
+        # Fetch user details
         userDetails = db.child("users").child(uid).get()
         
         if not userDetails:
             return jsonify({"message": "User record not found"}), 404
-
+        
         response = make_response(jsonify({
             "message": "Login successful!",
             "userDetails": userDetails,
             "jwtToken": id_token
         }), 200)
-
         response.set_cookie("jwtToken", id_token, httponly=True, samesite="Strict")
         return response
-
+        
+    except auth.InvalidIdTokenError as e:
+        print(f"Invalid ID Token Error: {e}")
+        return jsonify({
+            "message": "Login failed", 
+            "error": "Invalid or expired token"
+        }), 401
+    except auth.ExpiredIdTokenError as e:
+        print(f"Expired Token Error: {e}")
+        return jsonify({
+            "message": "Login failed", 
+            "error": "Token has expired"
+        }), 401
     except Exception as e:
-        print(f"Login Error: {e}")
-        return jsonify({"message": "Login failed", "error": str(e)}), 401
+        print(f"Login Error: {type(e).__name__}: {str(e)}")
+        return jsonify({
+            "message": "Login failed", 
+            "error": str(e)
+        }), 401
