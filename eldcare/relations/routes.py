@@ -8,13 +8,24 @@ from firebase_admin import credentials, auth as admin_auth, db as admin_db
 # Firebase Admin initialization
 # ===============================
 if not firebase_admin._apps:
-    cred = credentials.Certificate(firebase_config["serviceAccount"])
-    firebase_admin.initialize_app(cred, {
-        "databaseURL": firebase_config["databaseURL"]
-    })
+    try:
+        # Handle both dict (production) and string (local)
+        if isinstance(firebase_config["serviceAccount"], dict):
+            # Production: already a dictionary
+            cred = credentials.Certificate(firebase_config["serviceAccount"])
+        else:
+            # Local: file path
+            cred = credentials.Certificate(firebase_config["serviceAccount"])
+        
+        firebase_admin.initialize_app(cred, {
+            "databaseURL": firebase_config["databaseURL"]
+        })
+        print("✓ Firebase Admin initialized in user routes")
+    except Exception as e:
+        print(f"✗ Firebase initialization failed: {e}")
+        raise
 
 db = admin_db.reference()
-
 
 # ===============================
 # Helper: verify ID token
