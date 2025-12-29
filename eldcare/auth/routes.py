@@ -6,18 +6,31 @@ import json
 import firebase_admin
 from firebase_admin import credentials, auth, db as admin_db
 
-
 # ===============================
 # Firebase Admin initialization
 # ===============================
 
 if not firebase_admin._apps:
-    cred = credentials.Certificate(firebase_config["serviceAccount"])
-    firebase_admin.initialize_app(cred, {
-        "databaseURL": firebase_config["databaseURL"]
-    })
+    try:
+        # Check if serviceAccount is a dict (production) or string (local)
+        if isinstance(firebase_config["serviceAccount"], dict):
+            # Production: already a dictionary from environment variable
+            cred = credentials.Certificate(firebase_config["serviceAccount"])
+        else:
+            # Local: it's a file path
+            cred = credentials.Certificate(firebase_config["serviceAccount"])
+        
+        firebase_admin.initialize_app(cred, {
+            "databaseURL": firebase_config["databaseURL"]
+        })
+        
+        print("✓ Firebase Admin SDK initialized successfully")
+    except Exception as e:
+        print(f"✗ Firebase Admin initialization failed: {e}")
+        raise
 
 db = admin_db.reference()
+
 
 
 # ===============================
