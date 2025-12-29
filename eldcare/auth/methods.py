@@ -2,22 +2,30 @@ from config import firebase_config
 import firebase_admin
 from firebase_admin import credentials, auth
 
-
 # ===============================
 # Firebase Admin initialization
 # ===============================
-
 if not firebase_admin._apps:  # Only initialize if no app exists
-    cred = credentials.Certificate(firebase_config["serviceAccount"])
-    firebase_admin.initialize_app(cred, {
-        "databaseURL": firebase_config["databaseURL"]
-    })
-
+    try:
+        # Handle both dict (production) and string (local)
+        if isinstance(firebase_config["serviceAccount"], dict):
+            # Production: already a dictionary
+            cred = credentials.Certificate(firebase_config["serviceAccount"])
+        else:
+            # Local: file path
+            cred = credentials.Certificate(firebase_config["serviceAccount"])
+        
+        firebase_admin.initialize_app(cred, {
+            "databaseURL": firebase_config["databaseURL"]
+        })
+        print("✓ Firebase Admin initialized in auth functions")
+    except Exception as e:
+        print(f"✗ Firebase initialization failed: {e}")
+        raise
 
 # ===============================
 # Auth functions (same interface)
 # ===============================
-
 def sign_up(email, password):
     try:
         auth.create_user(
@@ -28,7 +36,6 @@ def sign_up(email, password):
     except Exception as e:
         print(e)
         return False
-
 
 def login(email, password):
     """
@@ -42,7 +49,6 @@ def login(email, password):
     except Exception as e:
         print(e)
         return False
-
 
 def logout():
     # Backend has no session state
