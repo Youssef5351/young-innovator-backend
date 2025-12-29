@@ -131,18 +131,37 @@ def get_doctors(userId):
 # ===============================
 # Get relatives
 # ===============================
-@app.route("/getRelatives/<userId>", methods=["GET"])
-def get_relatives(userId):
+# In your user_routes.py or wherever this route is
+
+@app.route("/getElders", methods=["GET"])
+def get_elders():
+    """Get relatives/elders for the authenticated user"""
     uid, error_response, status = get_uid_from_token()
     if error_response:
         return error_response, status
-
+    
     try:
-        relatives = db.child("elderlies").child(uid).child("relative_list").get()
-        return jsonify({"message": "Relatives retrieved successfully!", "relatives": relatives}), 200
+        # Get the relative list for this elderly person
+        relatives_data = db.child("elderlies").child(uid).child("relative_list").get()
+        
+        # If no relatives, return empty array
+        if not relatives_data:
+            return jsonify({
+                "message": "No relatives found",
+                "relatives": {}
+            }), 200
+        
+        return jsonify({
+            "message": "Relatives retrieved successfully!",
+            "relatives": relatives_data
+        }), 200
+        
     except Exception as e:
-        return jsonify({"message": "An error occurred while retrieving relatives.", "error": str(e)}), 402
-
+        print(f"Error in get_elders: {str(e)}")
+        return jsonify({
+            "message": "An error occurred while retrieving relatives.",
+            "error": str(e)
+        }), 500
 
 # ===============================
 # Get single patient
